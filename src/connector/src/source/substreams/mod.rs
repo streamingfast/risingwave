@@ -1,21 +1,22 @@
 use std::collections::HashMap;
-use phf::{phf_set, Set};
+
+use phf::{Set, phf_set};
 use serde_derive::Deserialize;
 use serde_with::serde_as;
 pub use source::*;
 use with_options::WithOptions;
+
 use crate::enforce_secret::EnforceSecret;
 use crate::source::SourceProperties;
 pub use crate::source::substreams::split::SubstreamsSplit;
 
-mod substreams;
-mod substreams_stream;
 mod pb;
+pub mod substreams;
+pub mod substreams_stream;
 
-pub mod source;
 pub mod enumerator;
+pub mod source;
 pub mod split;
-
 
 pub const STREAMINGFAST_SUBSTREAMS_CONNECTOR: &str = "streamingfast-substreams";
 
@@ -25,16 +26,24 @@ pub struct SubstreamsProperties {
     #[serde(flatten)]
     pub unknown_fields: HashMap<String, String>,
 
-    #[serde(rename = "substreams.package.url")]
+    #[serde(rename = "substreams.package_url")]
     pub spkg_url: String,
 
+    #[serde(rename = "substreams.output_module")]
+    pub output_module: String,
+
+    #[serde(rename = "substreams.endpoint_url")]
+    pub endpoint_url: String,
+
+    #[serde(rename = "substreams.start_block")]
+    pub start_block: String,
+
+    #[serde(rename = "substreams.stop_block")]
+    pub stop_block: String,
 }
 
-
 impl EnforceSecret for SubstreamsProperties {
-    const ENFORCE_SECRET_PROPERTIES: Set<&'static str> = phf_set! {
-        ">>>>>>>>>>>>>>>>>??????<<<<<<<<<<<<<<<",
-    };
+    const ENFORCE_SECRET_PROPERTIES: Set<&'static str> = phf_set! {};
 }
 
 impl crate::source::UnknownFields for SubstreamsProperties {
@@ -44,8 +53,9 @@ impl crate::source::UnknownFields for SubstreamsProperties {
 }
 
 impl SourceProperties for SubstreamsProperties {
-    const SOURCE_NAME: &'static str = STREAMINGFAST_SUBSTREAMS_CONNECTOR;
     type Split = SubstreamsSplit;
     type SplitEnumerator = enumerator::client::SubstreamSplitEnumerator;
     type SplitReader = reader::SubstreamsSplitReader;
+
+    const SOURCE_NAME: &'static str = STREAMINGFAST_SUBSTREAMS_CONNECTOR;
 }

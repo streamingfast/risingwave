@@ -25,6 +25,7 @@ pub mod prelude {
     pub use crate::source::nats::NatsSplitEnumerator;
     pub use crate::source::nexmark::NexmarkSplitEnumerator;
     pub use crate::source::pulsar::PulsarSplitEnumerator;
+    pub use crate::source::substreams::enumerator::client::SubstreamSplitEnumerator;
     pub use crate::source::test_source::TestSourceSplitEnumerator as TestSplitEnumerator;
     pub type AzblobSplitEnumerator =
         OpendalEnumerator<crate::source::filesystem::opendal_source::OpendalAzblob>;
@@ -55,6 +56,7 @@ pub mod mqtt;
 pub mod nats;
 pub mod nexmark;
 pub mod pulsar;
+pub mod substreams;
 mod util;
 
 use std::future::IntoFuture;
@@ -63,17 +65,16 @@ pub use base::{UPSTREAM_SOURCE_KEY, WEBHOOK_CONNECTOR, *};
 pub(crate) use common::*;
 use google_cloud_pubsub::subscription::Subscription;
 pub use google_pubsub::GOOGLE_PUBSUB_CONNECTOR;
-pub use substreams::STREAMINGFAST_SUBSTREAMS_CONNECTOR;
 pub use kafka::KAFKA_CONNECTOR;
 pub use kinesis::KINESIS_CONNECTOR;
 pub use mqtt::MQTT_CONNECTOR;
 pub use nats::NATS_CONNECTOR;
+pub use substreams::STREAMINGFAST_SUBSTREAMS_CONNECTOR;
 mod common;
 pub mod iceberg;
 mod manager;
 pub mod reader;
 pub mod test_source;
-mod substreams;
 
 use async_nats::jetstream::consumer::AckPolicy as JetStreamAckPolicy;
 use async_nats::jetstream::context::Context as JetStreamContext;

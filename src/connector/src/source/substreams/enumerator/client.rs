@@ -8,24 +8,25 @@ use futures::future::ok;
 use lazy_static::lazy_static;
 use prost::Message;
 use regex::Regex;
-use semver::Version;
 use risingwave_common::ensure;
+use semver::Version;
+
 use crate::error::{ConnectorError, ConnectorResult};
+use crate::source::google_pubsub::PubsubSplit;
 use crate::source::substreams::SubstreamsProperties;
 use crate::source::substreams::pb::sf::substreams::v1::Package;
 use crate::source::substreams::split::SubstreamsSplit;
+use crate::source::substreams::substreams::SubstreamsEndpoint;
 use crate::source::substreams::substreams_stream::SubstreamsStream;
 use crate::source::{SourceEnumeratorContextRef, SplitEnumerator};
-use crate::source::google_pubsub::PubsubSplit;
-use crate::source::substreams::substreams::SubstreamsEndpoint;
-
 
 pub struct SubstreamSplitEnumerator {
     pub package_file: String,
     pub module_name: String,
     pub endpoint_url: String,
     pub cursor: Option<String>,
-    pub token: String,
+    pub start_block: u64,
+    pub stop_block: u64,
 }
 
 #[async_trait]
@@ -37,14 +38,6 @@ impl SplitEnumerator for SubstreamSplitEnumerator {
         properties: Self::Properties,
         context: SourceEnumeratorContextRef,
     ) -> ConnectorResult<SubstreamSplitEnumerator> {
-        let token_env = env::var("SUBSTREAMS_API_TOKEN").unwrap_or("".to_string());
-        let mut token: Option<String> = None;
-        ensure!(token_env.len() > 0, "Missing SUBSTREAMS_API_TOKEN env var");
-
-        let mut endpoint_url = "https://mainnet.sol.streamingfast.io:443";
-        let package_file = "/Users/cbillett/devel/sf/substreams-sink-sql/db_proto/test/substreams/order/order-v0.1.0.spkg";
-        let module_name = "map_output";
-
         // let package = read_package(&package_file).await?;
         // let block_range = read_block_range(&package, &module_name)?;
         // let endpoint = Arc::new(SubstreamsEndpoint::new(&endpoint_url, token).await?);
@@ -61,33 +54,40 @@ impl SplitEnumerator for SubstreamSplitEnumerator {
         //     block_range.1,
         // );
 
+        let start_block = properties
+            .start_block
+            .parse::<u64>()
+            .context("Failed to parse start_block as u64")?;
+
+        let stop_block = properties
+            .stop_block
+            .parse::<u64>()
+            .context("Failed to parse stop_block as u64")?;
+
         tracing::info!("SubstreamEnumerator created");
 
-        Ok(
-            Self {
-                cursor: cursor,
-                package_file: package_file.to_string(),
-                endpoint_url: endpoint_url.to_string(),
-                module_name: module_name.to_string(),
-                token:token_env,
-            }
-        )
+        Ok(Self {
+            cursor,
+            package_file: properties.spkg_url,
+            endpoint_url: properties.endpoint_url,
+            module_name: properties.output_module,
+            start_block: start_block,
+            stop_block: stop_block,
+        })
     }
 
     async fn list_splits(&mut self) -> ConnectorResult<Vec<Self::Split>> {
         tracing::info!("Grrrr: SubstreamEnumerator list_splits");
-        let splits: Vec<SubstreamsSplit> =  vec![
-            SubstreamsSplit{
-                package_file: self.package_file.clone(),
-                module_name: self.module_name.clone(),
-                endpoint_url: self.endpoint_url.clone(),
-                cursor: self.cursor.clone(),
-                token: self.token.clone(),
-                __deprecated_start_offset: None,
-                __deprecated_stop_offset: None,
-            }
-        ];
+        let splits: Vec<SubstreamsSplit> = vec![SubstreamsSplit {
+            package_file: self.package_file.clone(),
+            module_name: self.module_name.clone(),
+            endpoint_url: self.endpoint_url.clone(),
+            cursor: self.cursor.clone(),
+            start_block: self.start_block,
+            stop_block: self.stop_block,
+            __deprecated_start_offset: None,
+            __deprecated_stop_offset: None,
+        }];
         Ok(splits)
     }
 }
-

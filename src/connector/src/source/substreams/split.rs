@@ -17,7 +17,8 @@ pub struct SubstreamsSplit {
     pub module_name: String,
     pub endpoint_url: String,
     pub cursor: Option<String>,
-    pub token: String,
+    pub start_block: u64,
+    pub stop_block: u64,
 
     #[serde(rename = "start_offset")]
     #[serde(skip_serializing)]

@@ -9,19 +9,23 @@ use google_cloud_gax::grpc::Code;
 use lazy_static::lazy_static;
 use prost::Message;
 use regex::Regex;
-use semver::Version;
 use risingwave_common::{bail, ensure};
+use semver::Version;
 use sqlx::postgres::{PgPool, PgPoolOptions};
+
 use crate::error::{ConnectorError, ConnectorResult as Result};
 use crate::parser::ParserConfig;
 use crate::source::google_pubsub::PubsubSplitReader;
 use crate::source::substreams::SubstreamsProperties;
+use crate::source::substreams::meta::SubstreamsMeta;
 use crate::source::substreams::pb::sf::substreams::v1::Package;
 use crate::source::substreams::split::SubstreamsSplit;
 use crate::source::substreams::substreams::SubstreamsEndpoint;
 use crate::source::substreams::substreams_stream::{BlockResponse, SubstreamsStream};
-use crate::source::{into_chunk_stream, BoxSourceChunkStream, Column, SourceContextRef, SourceMessage, SourceMeta, SplitId, SplitMetaData, SplitReader};
-use crate::source::substreams::meta::SubstreamsMeta;
+use crate::source::{
+    BoxSourceChunkStream, Column, SourceContextRef, SourceMessage, SourceMeta, SplitId,
+    SplitMetaData, SplitReader, into_chunk_stream,
+};
 
 lazy_static! {
     static ref MODULE_NAME_REGEXP: Regex = Regex::new(r"^([a-zA-Z][a-zA-Z0-9_-]{0,63})$").unwrap();
@@ -74,7 +78,7 @@ impl SubstreamsSplitReader {
                     // }
                     // tracing::info!("New block received: {} {}", output.type_url, output.value.len());
 
-                    let meta = SubstreamsMeta{
+                    let meta = SubstreamsMeta {
                         block_number: block_num,
                     };
                     let chunk: Vec<SourceMessage> = vec![SourceMessage {
@@ -82,7 +86,7 @@ impl SubstreamsSplitReader {
                         payload: Some(output.value),
                         offset: "".to_string(),
                         split_id: self.split_id.clone(),
-                        meta: SourceMeta::Substreams(meta) ,
+                        meta: SourceMeta::Substreams(meta),
                     }];
 
                     yield chunk;
@@ -116,9 +120,11 @@ impl SplitReader for SubstreamsSplitReader {
 
         let package = read_package(&split.package_file).await?;
         // let block_range = read_block_range(&package, &split.module_name)?;
-        let block_range = (0, 100000);
-        let endpoint = Arc::new(SubstreamsEndpoint::new(&split.endpoint_url, Some(split.token.clone())).await?);
-
+        let block_range = (split.start_block as i64, split.stop_block);
+        let token_env = env::var("SUBSTREAMS_API_TOKEN").unwrap_or("".to_string());
+        ensure!(token_env.len() > 0, "Missing SUBSTREAMS_API_TOKEN env var");
+        let endpoint =
+            Arc::new(SubstreamsEndpoint::new(&split.endpoint_url, Some(token_env)).await?);
 
         let db_pool = PgPoolOptions::new()
             .max_connections(5)
@@ -153,14 +159,16 @@ async fn read_package(input: &str) -> std::result::Result<Package, anyhow::Error
         let package_and_version = val.unwrap();
         mutable_input = format!(
             "{}/v1/packages/{}/{}",
-            REGISTRY_URL,
-            package_and_version.0,
-            package_and_version.1
+            REGISTRY_URL, package_and_version.0, package_and_version.1
         );
     }
 
     if mutable_input.starts_with("http") {
         return read_http_package(&mutable_input).await;
+    }
+
+    if mutable_input.starts_with("file://") {
+        mutable_input = mutable_input.replace("file://", "");
     }
 
     // Assume it's a local file
