@@ -143,6 +143,7 @@ pub fn extract_cdc_meta_column<'a>(
 pub fn extract_headers_from_meta(meta: &SourceMeta) -> Option<Datum> {
     match meta {
         SourceMeta::Kafka(kafka_meta) => kafka_meta.extract_headers(), /* expect output of type `array[struct<varchar, bytea>]` */
+        // SourceMeta::Substreams(substreams_meta) => substreams_meta.extract_headers(),
         _ => None,
     }
 }

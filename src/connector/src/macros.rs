@@ -33,6 +33,7 @@ macro_rules! for_all_classified_sources {
                 { Nexmark, $crate::source::nexmark::NexmarkProperties, $crate::source::nexmark::NexmarkSplit },
                 { Datagen, $crate::source::datagen::DatagenProperties, $crate::source::datagen::DatagenSplit },
                 { GooglePubsub, $crate::source::google_pubsub::PubsubProperties, $crate::source::google_pubsub::PubsubSplit },
+                { StreamingFast, $crate::source::substreams::SubstreamsProperties, $crate::source::substreams::SubstreamsSplit },
                 { Mqtt, $crate::source::mqtt::MqttProperties, $crate::source::mqtt::split::MqttSplit },
                 { Nats, $crate::source::nats::NatsProperties, $crate::source::nats::split::NatsSplit },
                 { S3, $crate::source::filesystem::LegacyS3Properties, $crate::source::filesystem::LegacyFsSplit },

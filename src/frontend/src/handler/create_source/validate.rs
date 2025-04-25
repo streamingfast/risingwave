@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use risingwave_connector::source::STREAMINGFAST_SUBSTREAMS_CONNECTOR;
 use super::*;
 
 pub static SOURCE_ALLOWED_CONNECTION_CONNECTOR: LazyLock<HashSet<PbConnectionType>> =
@@ -62,6 +63,9 @@ static CONNECTORS_COMPATIBLE_FORMATS: LazyLock<HashMap<String, HashMap<Format, V
                     Format::Debezium => vec![Encode::Json],
                     Format::Maxwell => vec![Encode::Json],
                     Format::Canal => vec![Encode::Json],
+                ),
+                STREAMINGFAST_SUBSTREAMS_CONNECTOR => hashmap!(
+                    Format::Plain => vec![Encode::Protobuf, Encode::Bytes],
                 ),
                 NEXMARK_CONNECTOR => hashmap!(
                     Format::Native => vec![Encode::Native],

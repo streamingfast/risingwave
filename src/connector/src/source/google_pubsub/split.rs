@@ -35,16 +35,16 @@ pub struct PubsubSplit {
 }
 
 impl SplitMetaData for PubsubSplit {
-    fn restore_from_json(value: JsonbVal) -> ConnectorResult<Self> {
-        serde_json::from_value(value.take()).map_err(Into::into)
+    fn id(&self) -> SplitId {
+        format!("{}-{}", self.subscription, self.index).into()
     }
 
     fn encode_to_json(&self) -> JsonbVal {
         serde_json::to_value(self.clone()).unwrap().into()
     }
 
-    fn id(&self) -> SplitId {
-        format!("{}-{}", self.subscription, self.index).into()
+    fn restore_from_json(value: JsonbVal) -> ConnectorResult<Self> {
+        serde_json::from_value(value.take()).map_err(Into::into)
     }
 
     /// No-op. Actually `PubsubSplit` doesn't maintain any state. It's fully managed by Pubsub.

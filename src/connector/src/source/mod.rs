@@ -63,6 +63,7 @@ pub use base::{UPSTREAM_SOURCE_KEY, WEBHOOK_CONNECTOR, *};
 pub(crate) use common::*;
 use google_cloud_pubsub::subscription::Subscription;
 pub use google_pubsub::GOOGLE_PUBSUB_CONNECTOR;
+pub use substreams::STREAMINGFAST_SUBSTREAMS_CONNECTOR;
 pub use kafka::KAFKA_CONNECTOR;
 pub use kinesis::KINESIS_CONNECTOR;
 pub use mqtt::MQTT_CONNECTOR;
@@ -72,6 +73,7 @@ pub mod iceberg;
 mod manager;
 pub mod reader;
 pub mod test_source;
+mod substreams;
 
 use async_nats::jetstream::consumer::AckPolicy as JetStreamAckPolicy;
 use async_nats::jetstream::context::Context as JetStreamContext;

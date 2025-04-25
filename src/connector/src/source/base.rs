@@ -763,6 +763,7 @@ impl SplitImpl {
 }
 
 use risingwave_common::types::DataType;
+use crate::source::substreams::meta::SubstreamsMeta;
 
 #[derive(Clone, Debug)]
 pub struct Column {
@@ -811,6 +812,7 @@ pub enum SourceMeta {
     Pulsar(PulsarMeta),
     Nexmark(NexmarkMeta),
     GooglePubsub(GooglePubsubMeta),
+    Substreams(SubstreamsMeta),
     Datagen(DatagenMeta),
     DebeziumCdc(DebeziumCdcMeta),
     Nats(NatsMeta),

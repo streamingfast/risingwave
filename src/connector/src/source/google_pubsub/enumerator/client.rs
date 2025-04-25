@@ -31,13 +31,14 @@ pub struct PubsubSplitEnumerator {
 
 #[async_trait]
 impl SplitEnumerator for PubsubSplitEnumerator {
-    type Properties = PubsubProperties;
     type Split = PubsubSplit;
+    type Properties = PubsubProperties;
 
     async fn new(
         properties: Self::Properties,
         _context: SourceEnumeratorContextRef,
     ) -> ConnectorResult<PubsubSplitEnumerator> {
+        tracing::info!("Grrrr: creating pubsub split enumerator");
         let split_count = properties.parallelism.unwrap_or(1);
         if split_count < 1 {
             bail!("parallelism must be >= 1");
@@ -85,6 +86,7 @@ impl SplitEnumerator for PubsubSplitEnumerator {
 
     async fn list_splits(&mut self) -> ConnectorResult<Vec<PubsubSplit>> {
         tracing::debug!("enumerating pubsub splits");
+        tracing::info!("Grrrrr: split count: {}", self.split_count);
         let splits: Vec<PubsubSplit> = (0..self.split_count)
             .map(|i| PubsubSplit {
                 index: i,

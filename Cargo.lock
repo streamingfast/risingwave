@@ -6154,7 +6154,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.57.0",
+ "windows-core 0.58.0",
 ]
 
 [[package]]
@@ -6726,11 +6726,11 @@ dependencies = [
 
 [[package]]
 name = "lazy_static"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 dependencies = [
- "spin 0.5.2",
+ "spin 0.9.8",
 ]
 
 [[package]]
@@ -11002,6 +11002,7 @@ dependencies = [
  "assert_matches",
  "async-compression",
  "async-nats",
+ "async-stream",
  "async-trait",
  "auto_enums",
  "auto_impl",
@@ -11048,6 +11049,7 @@ dependencies = [
  "indexmap 2.9.0",
  "itertools 0.14.0",
  "jni",
+ "lazy_static",
  "madsim-rdkafka",
  "madsim-tokio",
  "madsim-tonic",
@@ -11096,6 +11098,7 @@ dependencies = [
  "scopeguard",
  "sea-orm",
  "sea-schema",
+ "semver",
  "serde",
  "serde_derive",
  "serde_json",
@@ -13022,9 +13025,9 @@ checksum = "0f7d95a54511e0c7be3f51e8867aa8cf35148d7b9445d44de2f943e2b206e749"
 
 [[package]]
 name = "semver"
-version = "1.0.18"
+version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0293b4b29daaf487284529cc2f5675b8e57c61f70167ba415a463651fd6a918"
+checksum = "56e6fa9c48d24d85fb3de5ad847117517440f6beceb7798af16b4a87d616b8d0"
 dependencies = [
  "serde",
 ]
@@ -13572,12 +13575,6 @@ dependencies = [
  "strum 0.26.3",
  "strum_macros 0.26.4",
 ]
-
-[[package]]
-name = "spin"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "spin"
