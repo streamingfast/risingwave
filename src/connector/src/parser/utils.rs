@@ -165,3 +165,10 @@ pub fn extract_subject_from_meta(meta: &SourceMeta) -> Option<DatumRef<'_>> {
         _ => None,
     }
 }
+
+pub fn extract_block_number_from_meta(meta: &SourceMeta) -> Option<DatumRef<'_>> {
+    match meta {
+        SourceMeta::Substreams(meta) => Some(meta.extract_block_number()),
+        _ => None,
+    }
+}

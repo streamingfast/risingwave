@@ -361,6 +361,12 @@ impl SourceStreamChunkRowWriter<'_> {
                         .and_then(|ele| extract_subject_from_meta(ele.source_meta))
                         .unwrap_or(None),
                 )),
+                (_, &Some(AdditionalColumnType::BlockNumber(_))) => Ok(A::output_for(
+                    self.row_meta
+                        .as_ref()
+                        .and_then(|ele| extract_subject_from_meta(ele.source_meta))
+                        .unwrap_or(None),
+                )),
                 (_, &Some(AdditionalColumnType::Partition(_))) => {
                     // the meta info does not involve spec connector
                     Ok(A::output_for(

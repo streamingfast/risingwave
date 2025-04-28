@@ -23,7 +23,7 @@ use risingwave_pb::plan_common::{
     AdditionalCollectionName, AdditionalColumn, AdditionalColumnFilename, AdditionalColumnHeader,
     AdditionalColumnHeaders, AdditionalColumnKey, AdditionalColumnOffset,
     AdditionalColumnPartition, AdditionalColumnPayload, AdditionalColumnTimestamp,
-    AdditionalDatabaseName, AdditionalSchemaName, AdditionalSubject, AdditionalTableName,
+    AdditionalDatabaseName, AdditionalSchemaName, AdditionalSubject, AdditionalTableName, AdditionalBlockNumber
 };
 
 use crate::error::ConnectorResult;
@@ -31,6 +31,7 @@ use crate::source::cdc::MONGODB_CDC_CONNECTOR;
 use crate::source::{
     AZBLOB_CONNECTOR, GCS_CONNECTOR, KAFKA_CONNECTOR, KINESIS_CONNECTOR, MQTT_CONNECTOR,
     NATS_CONNECTOR, OPENDAL_S3_CONNECTOR, POSIX_FS_CONNECTOR, PULSAR_CONNECTOR,
+    STREAMINGFAST_SUBSTREAMS_CONNECTOR,
 };
 
 // Hidden additional columns connectors which do not support `include` syntax.
@@ -50,6 +51,10 @@ pub static COMPATIBLE_ADDITIONAL_COLUMNS: LazyLock<HashMap<&'static str, HashSet
                     "header",
                     "payload",
                 ]),
+            ),
+            (
+                STREAMINGFAST_SUBSTREAMS_CONNECTOR,
+                HashSet::from(["key", "partition", "offset", "payload", "block_num"]),
             ),
             (
                 PULSAR_CONNECTOR,
@@ -276,6 +281,14 @@ pub fn build_additional_column_desc(
             AdditionalColumn {
                 column_type: Some(AdditionalColumnType::Subject(AdditionalSubject {})),
             },
+        ),
+        "block_num" => ColumnDesc::named_with_additional_column(
+            column_name,
+            column_id,
+            DataType::Int64,
+            AdditionalColumn {
+                column_type: Some(AdditionalColumnType::BlockNumber(AdditionalBlockNumber {}))
+            }
         ),
         _ => unreachable!(),
     };

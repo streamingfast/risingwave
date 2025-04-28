@@ -82,7 +82,7 @@ impl SubstreamsSplitReader {
                         block_number: block_num,
                     };
                     let chunk: Vec<SourceMessage> = vec![SourceMessage {
-                        key: None,
+                        key: Some(block_num.to_string().as_str().into()),
                         payload: Some(output.value),
                         offset: "".to_string(),
                         split_id: self.split_id.clone(),
