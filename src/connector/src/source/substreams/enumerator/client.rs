@@ -77,7 +77,6 @@ impl SplitEnumerator for SubstreamSplitEnumerator {
     }
 
     async fn list_splits(&mut self) -> ConnectorResult<Vec<Self::Split>> {
-        tracing::info!("Grrrr: SubstreamEnumerator list_splits");
         let splits: Vec<SubstreamsSplit> = vec![SubstreamsSplit {
             package_file: self.package_file.clone(),
             module_name: self.module_name.clone(),

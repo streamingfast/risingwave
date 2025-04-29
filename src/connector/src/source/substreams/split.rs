@@ -42,11 +42,13 @@ impl SplitMetaData for SubstreamsSplit {
     }
 
     fn restore_from_json(value: JsonbVal) -> ConnectorResult<Self> {
-        serde_json::from_value(value.take()).map_err(Into::into)
+        let result = serde_json::from_value(value.take()).map_err(Into::into);
+        result
     }
 
-    fn update_offset(&mut self, _last_seen_offset: String) -> ConnectorResult<()> {
-        self.__deprecated_start_offset = None;
+    fn update_offset(&mut self, last_seen_offset: String) -> ConnectorResult<()> {
+        tracing::debug!("Grrrr: Updating offset: {}", last_seen_offset);
+        self.cursor = Some(last_seen_offset);
         Ok(())
     }
 }

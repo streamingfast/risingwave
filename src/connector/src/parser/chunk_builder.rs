@@ -26,10 +26,7 @@ use smallvec::SmallVec;
 use thiserror_ext::AsReport;
 
 use super::MessageMeta;
-use crate::parser::utils::{
-    extract_cdc_meta_column, extract_header_inner_from_meta, extract_headers_from_meta,
-    extract_subject_from_meta, extract_timestamp_from_meta,
-};
+use crate::parser::utils::{extract_block_number_from_meta, extract_cdc_meta_column, extract_header_inner_from_meta, extract_headers_from_meta, extract_subject_from_meta, extract_timestamp_from_meta};
 use crate::source::{SourceColumnDesc, SourceColumnType, SourceCtrlOpts, SourceMeta};
 
 /// Maximum number of rows in a transaction. If a transaction is larger than this, it will be force
@@ -364,7 +361,7 @@ impl SourceStreamChunkRowWriter<'_> {
                 (_, &Some(AdditionalColumnType::BlockNumber(_))) => Ok(A::output_for(
                     self.row_meta
                         .as_ref()
-                        .and_then(|ele| extract_subject_from_meta(ele.source_meta))
+                        .and_then(|ele| extract_block_number_from_meta(ele.source_meta))
                         .unwrap_or(None),
                 )),
                 (_, &Some(AdditionalColumnType::Partition(_))) => {

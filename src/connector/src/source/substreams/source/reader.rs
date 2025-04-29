@@ -48,7 +48,7 @@ pub struct SubstreamsSplitReader {
 impl SubstreamsSplitReader {
     #[try_stream(ok = Vec<SourceMessage>, error = ConnectorError)]
     async fn into_data_stream(self) {
-        println!("Starting StreamingFast Substreams stream");
+        tracing::info!("Starting StreamingFast Substreams stream with cursor: {:?}", self.cursor);
         let mut stream = SubstreamsStream::new(
             self.endpoint,
             self.cursor,
@@ -84,7 +84,7 @@ impl SubstreamsSplitReader {
                     let chunk: Vec<SourceMessage> = vec![SourceMessage {
                         key: Some(block_num.to_string().as_str().into()),
                         payload: Some(output.value),
-                        offset: "".to_string(),
+                        offset: data.cursor,
                         split_id: self.split_id.clone(),
                         meta: SourceMeta::Substreams(meta),
                     }];
@@ -110,13 +110,14 @@ impl SplitReader for SubstreamsSplitReader {
         source_ctx: SourceContextRef,
         _columns: Option<Vec<Column>>,
     ) -> Result<Self> {
-        tracing::info!("SubstreamsSplitReader new");
+        
 
         ensure!(
             splits.len() == 1,
             "the pubsub reader only supports a single split"
         );
         let split = splits.into_iter().next().unwrap();
+        tracing::info!("New SubstreamsSplitReader with cursor: {:?}", split.cursor);
 
         let package = read_package(&split.package_file).await?;
         // let block_range = read_block_range(&package, &split.module_name)?;
