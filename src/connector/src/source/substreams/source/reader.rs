@@ -1,5 +1,7 @@
 use std::env;
 use std::sync::Arc;
+use std::time::Duration;
+use tokio::time;
 
 use anyhow::{Context, Error, format_err};
 use async_trait::async_trait;
@@ -26,6 +28,7 @@ use crate::source::{
     BoxSourceChunkStream, Column, SourceContextRef, SourceMessage, SourceMeta, SplitId,
     SplitMetaData, SplitReader, into_chunk_stream,
 };
+use crate::source::substreams::cursor::Cursor;
 
 lazy_static! {
     static ref MODULE_NAME_REGEXP: Regex = Regex::new(r"^([a-zA-Z][a-zA-Z0-9_-]{0,63})$").unwrap();
@@ -37,33 +40,57 @@ pub struct SubstreamsSplitReader {
     pub package: Package,
     pub block_range: (i64, u64),
     pub endpoint: Arc<SubstreamsEndpoint>,
-    pub cursor: Option<String>,
     pub module_name: String,
     pub split_id: SplitId,
     pub parser_config: ParserConfig,
     pub source_ctx: SourceContextRef,
     pub db_pool: PgPool,
+    pub opaque_cursor: Option<String>,
 }
 
 impl SubstreamsSplitReader {
     #[try_stream(ok = Vec<SourceMessage>, error = ConnectorError)]
     async fn into_data_stream(self) {
-        tracing::info!("Starting StreamingFast Substreams stream with cursor: {:?}", self.cursor);
+        tracing::info!("Starting StreamingFast Substreams stream with cursor: {:?}", self.opaque_cursor.clone());
+
+        let stop_block = self.block_range.1;
+
+        match self.opaque_cursor.clone() {
+            None => {}
+            Some(oc) => {
+                let cursor = Cursor::from_opaque(oc.as_str());
+                if cursor.is_ok() {
+                    if stop_block > 0 && cursor.unwrap().block.number >= stop_block {
+                        tracing::info!("Grrr: Stop block reached, skipping substreams request");
+
+                        loop {
+                            tracing::info!("Sleeping");
+                            time::sleep(Duration::from_secs(10)).await;
+                        }
+
+                    }
+                }
+            }
+        }
+
         let mut stream = SubstreamsStream::new(
             self.endpoint,
-            self.cursor,
+            self.opaque_cursor,
             self.package.modules,
             self.module_name,
             self.block_range.0,
-            self.block_range.1,
+            stop_block,
         );
 
         loop {
             match stream.next().await {
                 None => {
-                    println!("Stream consumed");
-                    break;
+                    loop {
+                        tracing::info!("Stream consume... Sleeping");
+                        time::sleep(Duration::from_secs(10)).await;
+                    }
                 }
+
                 Some(Ok(BlockResponse::New(data))) => {
                     let output = data.output.unwrap().map_output.unwrap();
                     let block_num = data.clock.unwrap().number;
@@ -96,7 +123,9 @@ impl SubstreamsSplitReader {
             }
         }
     }
+
 }
+
 
 #[async_trait]
 impl SplitReader for SubstreamsSplitReader {
@@ -110,14 +139,12 @@ impl SplitReader for SubstreamsSplitReader {
         source_ctx: SourceContextRef,
         _columns: Option<Vec<Column>>,
     ) -> Result<Self> {
-        
-
         ensure!(
             splits.len() == 1,
-            "the pubsub reader only supports a single split"
+            "the substreams reader only supports a single split"
         );
         let split = splits.into_iter().next().unwrap();
-        tracing::info!("New SubstreamsSplitReader with cursor: {:?}", split.cursor);
+        tracing::info!("New SubstreamsSplitReader with cursor: {:?}", split.opaque_cursor);
 
         let package = read_package(&split.package_file).await?;
         // let block_range = read_block_range(&package, &split.module_name)?;
@@ -135,13 +162,13 @@ impl SplitReader for SubstreamsSplitReader {
         Ok(Self {
             split_id: split.id().clone(),
             module_name: split.module_name,
-            cursor: split.cursor,
-            package: package,
-            block_range: block_range,
-            endpoint: endpoint,
+            package,
+            block_range,
+            endpoint,
             parser_config,
             source_ctx,
             db_pool,
+            opaque_cursor: split.opaque_cursor,
         })
     }
 

@@ -17,6 +17,9 @@ pub mod substreams_stream;
 pub mod enumerator;
 pub mod source;
 pub mod split;
+mod cursor;
+mod key;
+mod step;
 
 pub const STREAMINGFAST_SUBSTREAMS_CONNECTOR: &str = "streamingfast-substreams";
 

@@ -256,7 +256,7 @@ where
                 let (msg, _memory_guard) = match self.read_message().await {
                     Ok(msg) => msg,
                     Err(e) => {
-                        tracing::error!(error = %e.as_report(), "error when reading message");
+                        tracing::error!(error = %e.as_report(), "Grrr: error when reading message");
                         return true; // terminate the connection
                     }
                 };
@@ -544,6 +544,7 @@ where
                 .await
                 .map(|message: FeMessage| (message, None)),
             PgProtocolState::Regular => {
+                tracing::info!("Grrrr: About to read header");
                 self.stream.read_header().await?;
                 let guard = if let Some(ref header) = self.stream.read_header {
                     let payload_len = std::cmp::max(header.payload_len, 0) as u64;
@@ -552,12 +553,15 @@ where
                         // Release the memory ASAP.
                         drop(guard);
                         self.stream.skip_body().await?;
+                        tracing::info!("Grrrr: About to throttle the client");
                         return Ok((FeMessage::ServerThrottle(reason), None));
                     }
+
                     guard
                 } else {
                     None
                 };
+                tracing::info!("Grrrr: About to read message");
                 let message = self.stream.read_body().await?;
                 Ok((message, guard))
             }
